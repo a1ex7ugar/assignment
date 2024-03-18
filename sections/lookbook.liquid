@@ -1,0 +1,322 @@
+{{ 'lookbook.css' | asset_url | stylesheet_tag }}
+
+{% assign image_height = section.settings.height %}
+{% assign product_list = section.settings.product_list %}
+
+{% style %}
+  #shopify-section-{{ section.id }} {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+  }
+  #shopify-section-{{ section.id }} .lookbook-wrapper{
+      display: grid;
+      grid-template-columns: {{ section.settings.image_width }}% 1fr;
+  }
+  #shopify-section-{{ section.id }} .lookbook-modal{
+      width: calc(100% - {{ section.settings.image_width }}%);
+  }
+  @media (max-width: 750px) {
+      #shopify-section-{{ section.id }} {
+          padding-top: {{ section.settings.padding_top | times: 0.5 }}px;
+          padding-bottom: {{ section.settings.padding_bottom | times: 0.5 }}px;
+      }
+      #shopify-section-{{ section.id }} .lookbook-wrapper{
+          grid-template-columns: 1fr;
+      }
+      #shopify-section-{{ section.id }} .lookbook-modal{
+          width: 100%;
+      }
+  }
+{% endstyle %}
+
+<div class="page-width">
+  <div class="lookbook-wrapper">
+    <button tabindex="4" class="close-modal">x</button>
+    <div class="lookbook-media">
+      <div
+        class="
+          lookbook-media__wrapper
+          {% case image_height %}
+              {% when 'adapt' %}
+              adapt-height
+              {% when 'small' %}
+              small-height
+              {% when 'medium' %}
+              medium-height
+              {% else %}
+              large-height
+          {% endcase %}
+        "
+      >
+        {% if section.settings.image != blank %}
+          <img src="{{ section.settings.image | image_url }}" alt="">
+        {% else %}
+          {{ 'detailed-apparel-1' | placeholder_svg_tag: 'placeholder-svg' }}
+        {% endif %}
+      </div>
+    </div>
+    <div
+      class="
+        lookbook-content
+        {% if section.settings.layout == "text_first" %}
+            content-first
+        {% endif %}
+
+        {% if section.settings.vertical_position == "top" %}
+            align-start
+        {% elsif section.settings.vertical_position == "middle" %}
+            align-center
+        {% else %}
+            align-end
+        {% endif %}
+      "
+    >
+      <div
+        class="
+          lookbook-content__wrapper
+          {% if section.settings.horizontal_position == "left" %}
+              justify-start
+          {% elsif section.settings.horizontal_position == "center" %}
+              justify-center
+          {% else %}
+              justify-end
+          {% endif %}
+
+          {% if section.settings.mobile_content_alignment == "left" %}
+              mob-justify-start
+          {% elsif section.settings.mobile_content_alignment == "center" %}
+              mob-justify-center
+          {% else %}
+              mob-justify-end
+          {% endif %}
+        "
+      >
+        {{ section.settings.content }}
+        <button tabindex="1" class="button lookbook-button">Shop the look</button>
+      </div>
+    </div>
+    <div class="lookbook-modal">
+    {% for product in product_list %}
+      <div class="modal-item">
+        <div class="modal-item__media">
+          <img src="{{ product.featured_image | image_url }}">
+        </div>
+        <div class="modal-item__content">
+          <div class="content_top">
+            <span class="item-title">{{ product.title }}</span>
+            <div class="price-wrapper">
+              <div class="oldprice-item">{{ product.compare_at_price | money }}</div>
+              <div class="price-item">{{ product.price | money }}</div>
+            </div>
+            <p>{{ product.metafields.custom.short_description }}</p>
+          </div>
+          <div class="content_bottom">
+            <div class="option-wrapper">
+              <select
+                style="{% if product.has_only_default_variant %}display: none;{% endif %}"
+                name="id"
+                class="variant-select"
+                tabindex="2"
+              >
+                {% for variant in product.variants %}
+                  <option
+                    data-oldprice="{{ variant.compare_at_price | money_without_trailing_zeros }}"
+                    data-price="{{ variant.price | money_without_trailing_zeros }}"
+                    value="{{ variant.id }}"
+                  >
+                    {{ variant.title }}
+                  </option>
+                {% endfor %}
+              </select>
+
+              {% if item.compare_at_price -%}
+                <span class="discount-price"
+                  >-
+                  {{- item.compare_at_price | minus: item.price | times: 100 | divided_by: item.compare_at_price -}}
+                  %</span
+                >
+              {%- endif %}
+            </div>
+            {% form 'product', product %}
+              <input name="id" type="hidden" value="{{ product.variants[0].id }}">
+              <button tabindex="3" class="button" type="submit">Add to cart</button>
+            {% endform %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  </div>
+  
+</div>
+
+{% schema %}
+{
+  "name": "Lookbook",
+  "class": "section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "richtext",
+      "id": "content",
+      "default": "<p>Random content</p>",
+      "label": "Content"
+    },
+    {
+      "type": "product_list",
+      "id": "product_list",
+      "label": "Products"
+    },
+    {
+      "type": "select",
+      "id": "height",
+      "options": [
+        {
+          "value": "adapt",
+          "label": "Adaptive height"
+        },
+        {
+          "value": "small",
+          "label": "Small"
+        },
+        {
+          "value": "medium",
+          "label": "Medium"
+        },
+        {
+          "value": "large",
+          "label": "Large"
+        }
+      ],
+      "default": "adapt",
+      "label": "Image height"
+    },
+    {
+      "type": "range",
+      "id": "image_width",
+      "min": 25,
+      "max": 75,
+      "step": 1,
+      "unit": "%",
+      "label": "Desktop image width",
+      "default": 50
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "options": [
+        {
+          "value": "image_first",
+          "label": "Image first"
+        },
+        {
+          "value": "text_first",
+          "label": "Image second"
+        }
+      ],
+      "default": "image_first",
+      "label": "Desktop image placement"
+    },
+    {
+      "type": "select",
+      "id": "vertical_position",
+      "options": [
+        {
+          "value": "top",
+          "label": "Top"
+        },
+        {
+          "value": "middle",
+          "label": "Middle"
+        },
+        {
+          "value": "bottom",
+          "label": "Bottom"
+        }
+      ],
+      "default": "top",
+      "label": "Desktop content position vertical"
+    },
+    {
+      "type": "select",
+      "id": "horizontal_position",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "left",
+      "label": "Desktop content position horizontal"
+    },
+    {
+      "type": "header",
+      "content": "Mobile layout"
+    },
+    {
+      "type": "select",
+      "id": "mobile_content_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "left",
+      "label": "Mobile content alignment"
+    },
+    {
+      "type": "header",
+      "content": "Section padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 36
+    }
+  ],
+  "presets": [
+    {
+      "name": "lookbook"
+    }
+  ]
+}
+{% endschema %}
