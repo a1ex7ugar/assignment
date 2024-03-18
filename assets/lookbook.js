@@ -63,7 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const htmlItems = new DOMParser().parseFromString(cartItems, 'text/html');
             if (document.querySelector('.cart-items')) {
                 document.querySelector('.cart-items').innerHTML = htmlItems.querySelector('.cart-items').innerHTML;
-            } else {
+                document.querySelector('.drawer__footer').innerHTML = htmlItems.querySelector('.drawer__footer').innerHTML;
+            } else { 
                 document.querySelector('.drawer__inner ').innerHTML = htmlItems.querySelector('.drawer__inner').innerHTML;
                 document.querySelector('cart-drawer').classList.toggle('is-empty');
             }
